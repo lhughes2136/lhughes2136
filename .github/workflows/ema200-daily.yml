@@ -2,18 +2,13 @@ name: EMA 200 Crypto Daily Scan
 
 on:
   workflow_dispatch:
-  pull_request:
-    types: [opened, synchronize]
   push:
     paths:
       - "ema200_scan.py"
-      - ".github/workflows/ema200-daily.yml"
   schedule:
-    # Regular daily runs at 08:05 America/New_York across DST.
+    # Run at 08:05 America/New_York across daylight-saving changes.
     - cron: "5 12 * * *"
     - cron: "5 13 * * *"
-    # One-time catch-up run for today's report (21:45 UTC, Aug 26).
-    - cron: "45 21 26 8 *"
 
 permissions:
   contents: write
@@ -43,11 +38,10 @@ jobs:
 
           event = os.environ.get("GITHUB_EVENT_NAME", "")
           local = datetime.now(ZoneInfo("America/New_York"))
-          catch_up = local.date().isoformat() == "2026-08-26" and local.hour == 17
-          should_run = event != "schedule" or local.hour == 8 or catch_up
+          should_run = event != "schedule" or local.hour == 8
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
               handle.write(f"run={'true' if should_run else 'false'}\n")
-          print(f"event={event} local={local.isoformat()} catch_up={catch_up} run={should_run}")
+          print(f"event={event} local={local.isoformat()} run={should_run}")
           PY
 
       - name: Set up Python
@@ -68,7 +62,7 @@ jobs:
         run: python ema200_scan.py
 
       - name: Commit latest report and state
-        if: steps.gate.outputs.run == 'true' && github.event_name != 'pull_request'
+        if: steps.gate.outputs.run == 'true'
         shell: bash
         run: |
           git config user.name "EMA200 Scan Bot"
