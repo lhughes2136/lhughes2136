@@ -9,10 +9,11 @@ on:
       - "ema200_scan.py"
       - ".github/workflows/ema200-daily.yml"
   schedule:
-    # GitHub cron is UTC. Running both handles US daylight-saving changes;
-    # the gate below keeps only the 08:05 America/New_York invocation.
+    # Regular daily runs at 08:05 America/New_York across DST.
     - cron: "5 12 * * *"
     - cron: "5 13 * * *"
+    # One-time catch-up run for today's report (21:45 UTC, Aug 26).
+    - cron: "45 21 26 8 *"
 
 permissions:
   contents: write
@@ -42,10 +43,11 @@ jobs:
 
           event = os.environ.get("GITHUB_EVENT_NAME", "")
           local = datetime.now(ZoneInfo("America/New_York"))
-          should_run = event != "schedule" or local.hour == 8
+          catch_up = local.date().isoformat() == "2026-08-26" and local.hour == 17
+          should_run = event != "schedule" or local.hour == 8 or catch_up
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
               handle.write(f"run={'true' if should_run else 'false'}\n")
-          print(f"event={event} local={local.isoformat()} run={should_run}")
+          print(f"event={event} local={local.isoformat()} catch_up={catch_up} run={should_run}")
           PY
 
       - name: Set up Python
