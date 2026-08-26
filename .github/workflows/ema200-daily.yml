@@ -2,6 +2,8 @@ name: EMA 200 Crypto Daily Scan
 
 on:
   workflow_dispatch:
+  issues:
+    types: [opened]
   push:
     paths:
       - "ema200_scan.py"
