@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "ema200_scan.py"
+      - "run-trigger.txt"
   schedule:
     # Run at 08:05 America/New_York across daylight-saving changes.
     - cron: "5 12 * * *"
